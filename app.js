@@ -1,134 +1,100 @@
 const cl=console.log;
-const stdForm=document.getElementById('stdForm');
-const fname=document.getElementById('fname');
-const lname=document.getElementById('lname');
-const contact=document.getElementById('contact');
-const email=document.getElementById('email');
-const submit=document.getElementById('submit');
-const stdContainer=document.getElementById('stdContainer');
-const alertmsg=document.getElementById('alertmsg');
-const table=document.getElementById('table');
-const updatestd=document.getElementById('updatestd');
+const todoForm=document.getElementById('todoForm')
+const todoItem=document.getElementById('todoItem')
+const addTodo=document.getElementById('addTodo')
+const updateTodo=document.getElementById('updateTodo')
+const todoContainer=document.getElementById('todoContainer')
 
-let stdarr=localStorage.getItem('stdarr') ? JSON.parse(localStorage.getItem('stdarr')):[]
-const openSnackBar=(msg,icon)=>{
-    Swal.fire({
-        title:msg,
-        icon:icon,
-        timer:3000
+let todoArr=localStorage.getItem('todoArr') ? JSON.parse(localStorage.getItem('todoArr')):[]
 
+const generateUuid = ()=>{
+    return (
+      String('xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx')
+    ).replace(/[xy]/g, (character) => {
+      const random = (Math.random() * 16) | 0;
+      const value = character === "x" ? random : (random & 0x3) | 0x8;
+      return value.toString(16);
+    });
+  };
+const ontodoedit = (e) =>{
+let editid = e.closest('li').id;
+localStorage.setItem('editid',editid)
+let editobj = todoArr.find(todo => todo.todoid === editid)
+todoItem.value=editobj.todoItem
+updateTodo.classList.remove('d-none')
+addTodo.classList.add('d-none')
+  }
+  const onremove =(e)=>{
+    let removeid=e.closest('li').id
+    let removeindex=todoArr.findIndex(todo=> todo.todoid=removeid)
+    todoArr.splice(removeindex,1)
+    localStorage.setItem('todoArr',JSON.stringify(todoArr))
+    e.closest('li').remove()
+  }
+
+  const createtodoList = (arr) =>{
+    let result=`<ul class="list-group">`;
+    arr.forEach( todo =>{
+        result+=`<li class="list-group-item d-flex justify-content-between">${todo.todoid}
+        <strong>${todo.todoItem}</strong>
+        <div>
+                   <button class="btn btn-sm btn-outline-info" onclick="ontodoedit(this)">Edit</button>
+                   <button class="btn btn-sm btn-outline-danger" onclick="onremove(this)">Remove</button>
+        </div>
+        </li>`
     })
-}
+    result+=`</ul>`;
+todoContainer.innerHTML=result;
+  }
+    createtodoList(todoArr);
 
-const showalertmsg=(arr)=>{
-    if(arr.length===0){
-        alertmsg.classList.remove('d-none')
-        table.classList.add('d-none')
-    }
-    else{
-        alertmsg.classList.add('d-none')
-        table.classList.remove('d-none')
-    }
-}
-showalertmsg(stdarr)
-const generateUuid=()=>{
-    return(
-        String('xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx')).replace(/[xy]/g,(character)=>{
-            const random=(Math.random()*16)|0;
-            const value=character==="x" ? random : (random & 0x3)|0x8;
-            return value.toString(16);
-        })
-};
-const onEdit=(e)=>{
-    let editid=e.closest('tr').id
-    localStorage.setItem('editid',editid)
-    let editobj=stdarr.find(std=>std.id===editid)
-    fname.value=editobj.fname
-    lname.value=editobj.lname
-    contact.value=editobj.contact
-    email.value=editobj.email
-    submit.classList.add('d-none')
-    updatestd.classList.remove('d-none')
-}
-const onUpdate=(e)=>{
-    let editid=localStorage.getItem('editid')
-    let updatedobj={
-        fname:fname.value,
-        lname:lname.value,
-        contact:contact.value,
-        email:email.value,
-        id:editid
-    }
-    stdForm.reset()
-    updatestd.classList.add('d-none')
-    submit.classList.remove('d-none')
-    let editindex=stdarr.findIndex(std=> std.id===editid)
-    stdarr[editindex]=updatedobj;
-    localStorage.setItem('stdarr',JSON.stringify(stdarr))
-    const alltds=
-    [...document.getElementById(editid).children]
-    alltds[1].innerHTML=updatedobj.fname
-    alltds[2].innerHTML=updatedobj.lname
-    alltds[3].innerHTML=updatedobj.contact
-    alltds[4].innerHTML=updatedobj.email
-    openSnackBar(`New Student "${updatedobj.fname} ${updatedobj.lname}" Updated Successfully!`,'success')
-}
-const createtrs=(arr)=>{
-    let result=stdarr.map((std,i)=>
-        `<tr id="${std.id}">
-    <td>${i+1}</td>
-    <td>${std.fname}</td>
-    <td>${std.lname}</td>
-    <td>${std.contact}</td>
-    <td>${std.email}</td>
-    <td class="text-center"><i class="fas fa-edit fa-2x test-success" onclick="onEdit(this)"></i></td>
-      <td class="text-center"><i class="fas fa-trash-alt fa-2x text-danger" onclick="onRemove(this)"></i></td>
-    </tr>
-    `).join('')
-    stdContainer.innerHTML=result;
-}
-createtrs(stdarr)
 
-const onRemove=(e)=>{
-    let getconfirm=confirm(`Are you sure want to remove? `)
-    if(getconfirm){
-        removeid=e.closest('tr').id
-        let removeindex=stdarr.findIndex(std=>std.id===removeid)
-        stdarr.splice(removeindex,1)
-        localStorage.setItem('stdarr',JSON.stringify(stdarr))
-        e.closest('tr').remove()
-        let alltrs=[...document.querySelectorAll('#stdcontainer tr')]
-        alltrs.forEach((tr,i)=>tr.firstElementChild.innerHTML=i+1)
-        openSnackBar(`student removed successfully!`,'success')
-        showalertmsg(stdarr)
-    }
-}
-const onSubmit=(e)=>{
-    e.preventDefault()
+const onaddTodo = (eve) =>{
+    eve.preventDefault();
     let obj={
-        fname:fname.value,
-        lname:lname.value,
-        contact:contact.value,
-        email:email.value,
-        id:generateUuid()
+        todoItem:todoItem.value,
+        todoid:generateUuid()
     }
-    stdForm.reset()
-    stdarr.push(obj)
-    localStorage.setItem('stdarr',JSON.stringify(stdarr))
-    let newtr=document.createElement('tr')
-    newtr.id=obj.id
-    newtr.innerHTML=`
-    <td>${stdarr.length}</td>
-    <td>${obj.fname}</td>
-    <td>${obj.lname}</td>
-    <td>${obj.contact}</td>
-    <td>${obj.email}</td>
-    <td class="text-center"><i class="fas fa-edit fa-2x test-success" onclick="onEdit(this)"></i></td>
-      <td class="text-center"><i class="fas fa-trash-alt fa-2x text-danger" onclick="onRemove(this)"></i></td>
-    </tr>`
-    stdContainer.append(newtr)
-    showalertmsg(stdarr)
-    openSnackBar(`New Student "${obj.fname} ${obj.lname}" Added Successfully!`,'success')
+    todoArr.unshift(obj);
+    localStorage.setItem('todoArr',JSON.stringify(todoArr))
+    let newli=document.createElement('li')
+    newli.className='list-group-item d-flex justify-content-between'
+    newli.id=obj.todoid
+    newli.innerHTML=`<strong>${todoItem.value}</strong>
+    <div>
+    <button class="btn btn-sm btn-outline-info" onclick="ontodoedit(this)">Edit</button>
+    <button class="btn btn-sm btn-outline-danger" onclick="onremove(this)">Remove</button>
+    </div>`
+    todoContainer.prepend(newli)
+    Swal.fire({
+        title:`TodoItem ${obj.todoItem} addedd successfully`,
+        icon:"success",
+        draggable:true
+    })
+todoForm.reset()
 }
-stdForm.addEventListener('submit',onSubmit)
-updatestd.addEventListener('click',onUpdate)
+const ontodoupdate =()=> {
+    let updateTodo={
+        todoItem:todoItem.value,
+        todoid:localStorage.getItem('editid')
+    }
+    let getindex = todoArr.findIndex(todo=>{
+        todo.todoid === updateTodo.todoid
+    })
+    todoArr[getindex]=updateTodo;
+    localStorage.setItem('todoArr',JSON.stringify(todoArr))
+    todoForm.reset()
+    let li=document.getElementById(localStorage.getItem('editid'))
+    li.firstElementChild.innerHTML=updateTodo.todoItem
+    addTodo.classList.add('d-none')
+    updateTodo.classList.remove('d-none')
+    Swal.fire({
+        title:`TodoItem ${obj.todoItem} updated successfully`,
+        icon:"success",
+        draggable:true
+    })
+
+}
+todoForm.addEventListener('submit',onaddTodo);
+updateTodo.addEventListener('click',ontodoupdate);
+
